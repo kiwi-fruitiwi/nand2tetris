@@ -1,3 +1,4 @@
+// @author Kiwi
 // This file is part of www.nand2tetris.org
 // and the book "The Elements of Computing Systems"
 // by Nisan and Schocken, MIT Press.
@@ -17,4 +18,8 @@ CHIP DMux8Way {
 
     PARTS:
     // Put your code here:
-}
+
+    DMux(in=in, sel=sel[2], a=abcdmux4, b=efghmux4);
+    DMux4Way(in=abcdmux4, sel=sel[0..1], a=a, b=b, c=c, d=d);
+    DMux4Way(in=efghmux4, sel=sel[0..1], a=e, b=f, c=g, d=h);
+} 
