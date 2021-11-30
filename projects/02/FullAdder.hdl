@@ -1,3 +1,4 @@
+// kiwi
 // This file is part of www.nand2tetris.org
 // and the book "The Elements of Computing Systems"
 // by Nisan and Schocken, MIT Press.
@@ -14,5 +15,9 @@ CHIP FullAdder {
 
     PARTS:
     // Put you code here:
-    
+    Xor(a=a, b=b, out=axorb);
+    Xor(a=axorb, b=c, out=sum);
+    And(a=axorb, b=c, out=axorbandc);
+    And(a=a, b=b, out=aandb);
+    Or(a=aandb, b=axorbandc, out=carry);
 }
