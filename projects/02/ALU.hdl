@@ -1,3 +1,4 @@
+// Kiwi
 // This file is part of www.nand2tetris.org
 // and the book "The Elements of Computing Systems"
 // by Nisan and Schocken, MIT Press.
@@ -60,5 +61,14 @@ CHIP ALU {
 
     // negating the output
     Not16(in=out1, out=nout1);
-    Mux16(a=out1, b=nout1, sel=no, out=out);
+    Mux16(a=out1, b=nout1, sel=no, out=out, out[0..7]=lsb, out[8..15]=msb, out[15]=ng);
+
+    // above, we set a few flags for the status outputs
+    // for example, ng: return out[15] is out[15]=ng in the last mux16
+
+    // for zr: 1 if out==0, 0 otherwise. Two Or8Way + Or
+    Or8Way(in=lsb, out=lsbor);
+    Or8Way(in=msb, out=msbor);
+    Or(a=lsbor, b=msbor, out=notzr);
+    Not(in=notzr, out=zr);
 }
