@@ -16,5 +16,20 @@ CHIP PC {
     OUT out[16];
 
     PARTS:
-    // Put your code here:
+    
+    // build inc OR reset OR load to use as "load" for our register
+    Or(a=inc, b=reset, out=incOrReset);
+    Or(a=incOrReset, b=load, out=regLoad);
+
+    // in/inc mux
+    Mux16(a=in, b=incOut, sel=inc, out=inIncOut);
+
+    // false or in/inc mux which is wired to our register's in[16]
+    Mux16(a=inIncOut, b=false, sel=reset, out=regIn);
+
+    // our register
+    Register(in=regIn, load=regLoad, out=out, out=regOut);
+
+    // inc16 between our register and in/inc mux
+    Inc16(in=regOut, out=incOut);
 }
