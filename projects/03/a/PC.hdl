@@ -16,7 +16,26 @@ CHIP PC {
     OUT out[16];
 
     PARTS:
-    
+
+    // this register is the core of our counter
+    Register(in=resetMux, load=true, out=out, out=feedback);
+
+    // incrementer: we feed the output of our register to this
+    Inc16(in=feedback, out=increment);
+
+    // now we have 3 muxes that control the nested if loops
+    // outermost mux: inc or feedback?
+    Mux16(a=feedback, b=increment, sel=inc, out=incMux);
+
+    // middle mux: increment or load from in[16]?
+    Mux16(a=incMux, b=in, sel=load, out=loadMux);
+
+    // final mux: load or reset to 0?
+    Mux16(a=loadMux, b=false, sel=reset, out=resetMux);
+   
+
+/*  the below didn't work because load=1, inc=1 was wrong
+
     // build inc OR reset OR load to use as "load" for our register
     Or(a=inc, b=reset, out=incOrReset);
     Or(a=incOrReset, b=load, out=regLoad);
@@ -32,4 +51,6 @@ CHIP PC {
 
     // inc16 between our register and in/inc mux
     Inc16(in=regOut, out=incOut);
+*/
+
 }
