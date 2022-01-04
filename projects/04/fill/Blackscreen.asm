@@ -1,41 +1,30 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // try to make the entire display black
 
-@24	
+@8192	
 D=A		// register D=8192
 @i
 M=D		// i=8192
 
-// set first 16 pixels black
-// (LOOP)
 
-D=M // assign D to i
-@SCREEN
-D=D+A
-A=D
-M=-1
+(LOOP)
+	@i
+	D=M
+	@END
+	D;JLT // if i < 0, goto END
 
-// @LOOP
-// 0;JMP
+	@i
+	M=M-1 // decrement i every time we loop
+
+	@SCREEN
+	D=D+A // D=SCREEN+i. note that these are addresses
+	A=D
+	M=-1 // set this screen RAM word to make 16 black pixels
+
+
+
+	@LOOP
+	0;JMP
 
 (END)
-@END
-0;JMP
+	@END
+	0;JMP
