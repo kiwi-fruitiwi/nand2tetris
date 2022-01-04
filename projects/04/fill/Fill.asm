@@ -33,11 +33,13 @@ D;JEQ
 // @n
 // M=D			// testing turning "off" the 7th bit
 
+
 @addr
 A=M
 M=-1 			// -1 is 2^16-1, or all 1's. use D if we want to uncomment above code
 @LOOP
 0;JMP
+
 
 (NOINPUT)		// no keyboard input means we want all pixels white
 @addr
