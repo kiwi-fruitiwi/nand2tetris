@@ -12,15 +12,15 @@ M=D		// i=8192
 	@i
 	D=M
 	@END
-	D;JLT // if i < 0, goto END
+	D;JLT 	// if i < 0, goto END
 
 	@i
-	M=M-1 // decrement i every time we loop
+	M=M-1 	// decrement i every time we loop
 
 	@SCREEN
-	D=D+A // D=SCREEN+i. note that these are addresses
+	D=D+A 	// D=SCREEN+i. note that these are addresses
 	A=D
-	M=-1 // set this screen RAM word to make 16 black pixels
+	M=-1 	// set this screen RAM word to make 16 black pixels
 
 	@LOOP
 	0;JMP
