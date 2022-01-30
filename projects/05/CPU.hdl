@@ -45,7 +45,7 @@ CHIP CPU {
 
 
     // input mux to A register. selects between instruction and ALU output
-    Mux16(a=ALUOut, b=instruction, sel=instruction[15], out=ARegIn);
+    Mux16(a=instruction, b=ALUOut, sel=instruction[15], out=ARegIn);
 
 
 
@@ -90,7 +90,10 @@ CHIP CPU {
     Or(a=ltJump, b=zrJump, out=ltOrZrJump);
 
     // OR less than or zero jump bit with positive jump bit
-    Or(a=ltOrZrJump, b=gtJump, out=PCLoad);    
+    Or(a=ltOrZrJump, b=gtJump, out=PCJump);
+
+    // make sure we load PC only for c-instructions
+    And(a=PCJump, b=instruction[15], out=PCLoad);  
 
 
     // PC
