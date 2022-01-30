@@ -21,7 +21,7 @@
  * of the target location is placed in the addressM output, and the 
  * writeM control bit is asserted. (When writeM==0, any value may 
  * appear in outM). The outM and writeM outputs are combinational: 
- * they are affected instantaneously by the execution of the current 
+ * they are affected instructiontantaneously by the execution of the current 
  * instruction. The addressM and pc outputs are clocked: although they 
  * are affected by the execution of the current instruction, they commit 
  * to their new values only in the next time step. If reset==1 then the 
@@ -31,7 +31,7 @@
 
 CHIP CPU {
     IN  inM[16],         // M value input  (M = contents of RAM[A])
-        instruction[16], // Instruction for execution
+        instruction[16], // instruction for execution
         reset;           // Signals whether to re-start the current
                          // program (reset==1) or continue executing
                          // the current program (reset==0).
@@ -42,6 +42,67 @@ CHIP CPU {
         pc[15];          // address of next instruction
 
     PARTS:
-    
 
+
+    // input mux to A register. selects between instruction and ALU output
+    Mux16(a=ALUOut, b=instruction, sel=instruction[15], out=ARegIn);
+
+
+
+    // A register
+    // an a-instruction has opcode 0 and always loads the A register
+    Not(in=instruction[15], out=notOpcode); // true if instruction is an a-instruction
+
+    // a c-instruction only loads the A register if dest turns on the A bit
+    And(a=instruction[15], b=instruction[4], out=cinstructionDestDReg);
+
+    // either any a-instruction or a c-instruction with dest including RegA loads me
+    Or(a=notOpcode, b=cinstructionDestDReg, out=ARegLoad);
+    Register(in=ARegIn, load=ARegLoad, out=ARegOut, out[0..14]=addressM);
+    // TODO addressM is 15 bits, but out is 15
+
+
+    // D register
+    DRegister(in=ALUOut, load=instruction[5], out=DRegOut);
+
+
+
+    // A or M selector for c-instructions. instruction[12] is 'a' in the c-instruction diagram
+    Mux16(a=ARegOut, b=inM, sel=instruction[12], out=AOrM);
+
+
+
+    // PC load bit
+    // determine if ALU result is positive: it must be !negative and !zero
+    // ng and zr are conveniently ALU flags
+    Nor(a=ng, b=zr, out=positive);
+
+    // less than bit: instruction[2]
+    And(a=instruction[2], b=ng, out=ltJump); // less than zero jump
+
+    // equal to zero bit: instruction[1]
+    And(a=instruction[1], b=zr, out=zrJump);
+
+    // greater than zero bit: instruction[0]
+    And(a=instruction[0], b=positive, out=gtJump);
+
+    // OR lt and zr jump bits together
+    Or(a=ltJump, b=zrJump, out=ltOrZrJump);
+
+    // OR less than or zero jump bit with positive jump bit
+    Or(a=ltOrZrJump, b=gtJump, out=PCLoad);    
+
+
+    // PC
+    PC(in=ARegOut, load=PCLoad, inc=true, reset=reset, out[0..14]=pc);
+
+
+
+    // ALU
+    ALU(x=DRegOut, y=AOrM, zx=instruction[6], nx=instruction[7], zy=instruction[8], ny=instruction[9], f=instruction[10], no=instruction[11], out=ALUOut, zr=zr, ng=ng, out=outM);
+
+
+
+    // writeM output
+    And(a=instruction[3], b=instruction[15], out=writeM);
 }
