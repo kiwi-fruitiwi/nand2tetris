@@ -1,5 +1,7 @@
 /* @author kiwi 
  * @date 2022.01.30
+ * TODO: optimize A register's load bit
+ * TODO: figure out why D register load bit needs to be anded with opcode
  */
 
 // This file is part of www.nand2tetris.org
@@ -49,12 +51,12 @@ CHIP CPU {
 
 
 
-    // A register
+    /* A register */
     // an a-instruction has opcode 0 and always loads the A register
     Not(in=instruction[15], out=notOpcode); // true if instruction is an a-instruction
 
     // a c-instruction only loads the A register if dest turns on the A bit
-    And(a=instruction[15], b=instruction[4], out=cinstructionDestDReg);
+    And(a=instruction[15], b=instruction[5], out=cinstructionDestDReg);
 
     // either any a-instruction or a c-instruction with dest including RegA loads me
     Or(a=notOpcode, b=cinstructionDestDReg, out=ARegLoad);
@@ -62,17 +64,23 @@ CHIP CPU {
     // TODO addressM is 15 bits, but out is 15
 
 
-    // D register
-    DRegister(in=ALUOut, load=instruction[5], out=DRegOut);
+
+    /* D register */
+    /* make sure we only load D if it's a c-instruction */
+    And(a=instruction[4], b=instruction[15], out=cInsAndDestD);
+    // DRegister(in=ALUOut, load=instruction[4], out=DRegOut);
+    DRegister(in=ALUOut, load=cInsAndDestD, out=DRegOut);
 
 
-
-    // A or M selector for c-instructions. instruction[12] is 'a' in the c-instruction diagram
+    /* A or M selector for c-instructions */ 
+    // instruction[12] is 'a' in the c-instruction diagram
+    // we only want this selecting if it's a c-instruction right?
+    // or does it not matter?
     Mux16(a=ARegOut, b=inM, sel=instruction[12], out=AOrM);
 
 
 
-    // PC load bit
+    /* PC load bit */
     // determine if ALU result is positive: it must be !negative and !zero
     // ng and zr are conveniently ALU flags
     Nor(a=ng, b=zr, out=positive);
@@ -96,16 +104,17 @@ CHIP CPU {
     And(a=PCJump, b=instruction[15], out=PCLoad);  
 
 
-    // PC
+
+    /* PC */
     PC(in=ARegOut, load=PCLoad, inc=true, reset=reset, out[0..14]=pc);
 
 
 
-    // ALU
-    ALU(x=DRegOut, y=AOrM, zx=instruction[6], nx=instruction[7], zy=instruction[8], ny=instruction[9], f=instruction[10], no=instruction[11], out=ALUOut, zr=zr, ng=ng, out=outM);
+    /* ALU */
+    ALU(x=DRegOut, y=AOrM, zx=instruction[11], nx=instruction[10], zy=instruction[9], ny=instruction[8], f=instruction[7], no=instruction[6], out=ALUOut, zr=zr, ng=ng, out=outM);
 
 
 
-    // writeM output
+    /* writeM output */
     And(a=instruction[3], b=instruction[15], out=writeM);
 }
