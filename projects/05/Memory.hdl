@@ -29,6 +29,10 @@ CHIP Memory {
     PARTS:
 
 
+    /* Not of addr[15] */
+    Not(in=addr[15], out=notAddr15)
+
+
     /* KBDETECT: detects 110 0000 0000 0000 = 2^14 + 2^15 = 16384+8192 = 24576
         of the 15 address bits:
             we NOT addr[13] and addr[14] as they map to 2^14 and 2^15
@@ -37,20 +41,35 @@ CHIP Memory {
             if we NOT the output of these Or8Ways, we get a 1 if all bits are 0
         then we AND both
         output: 1 if 15 bits equal 110 0000 0000 0000
+
+        🛠 according to the spec any address > 0x6000 is invalid
+            maybe we should only check addr[14] AND addr[13]
+                outputs 1 if both bits are on; addr >= 24576
     */
+    And(a=address[14], b=address[13], out=KBDetect)
 
 
     /* RAM: a RAM16K with in[16], addr[0..14], and ramOut wire 
         load bit: load AND(NOT(addr[15]), NOT(KBDetect))
             → only load RAM if address is below 16384
             → no need to check for KBDetect since that would be >16384
+
+        CHIP RAM16K
+            IN in[16], load, address[14]; note index 14 is 2^13=8192
+            OUT out[16];
     */
+    And(a=notAddr15, b=load, out=RAMLoad)
+    RAM16K(in=in, load=RAMLoad, address=address[0..13], out=RamOut)
 
 
     /* SCREEN: a RAM8K 'Screen' chip with in[16], addr[0..13], and screenOut wire
         load bit: load AND addr[14] AND NOT addr[13]
             → we could also check KBDetect, but unnecessary because >24576 is invalid?
+        addr[13] is 2^13=8192. Screen memory is accessed only when addr[14]=1 (address ≥ 16384) and addr[13]=0 (16384+0*8192)
     */
+    Not(in=address[13], out=notAddr13)
+    And(a=address[14], b=notAddr13, out=ScreenLoad)
+    Screen(in=in, load=ScreenLoad, address=address[0..12], out=ScreenOut)
 
 
     /* OUT_SELECTOR: selects between outputs of RAM, Screen, or Keyboard chips
@@ -62,7 +81,12 @@ CHIP Memory {
             b. RAM → 01. range from [0, 16383]
             c. Screen → 10. range from [16384=2^14, 2^14+2^13-1=16384+8192-1=24575]
             d. Keyboard → 11. 24576
+
+        CHIP Mux4Way16
+            IN a[16], b[16], c[16], d[16], sel[2];
+            OUT out[16];
     */
+    Mux4Way16(a=RamOut, b=RamOut, c=ScreenOut, d=KBDetectMux, sel[0]=address[13], sel[1]=address[14], out=out)
 
 
     /* KEYBOARD: a 16-bit Register 'Keyboard' chip with one out wire 
@@ -70,5 +94,11 @@ CHIP Memory {
             Mux16
                 a: KeyboardOut
                 b: false
+
+        CHIP Mux16 
+            IN a[16], b[16], sel;
+            OUT out[16];
     */
+    Keyboard(out=KeyboardOut)
+    Mux16(a=false, b=KeyboardOut, sel=KBDetect, out=KBDetectMux)
 }
