@@ -27,5 +27,48 @@ CHIP Memory {
     OUT out[16];
 
     PARTS:
-    // Put your code here:
+
+
+    /* KBDETECT: detects 110 0000 0000 0000 = 2^14 + 2^15 = 16384+8192 = 24576
+        of the 15 address bits:
+            we NOT addr[13] and addr[14] as they map to 2^14 and 2^15
+            we put 8 into one Or8Way
+            and 7 + false into another Or8Way
+            if we NOT the output of these Or8Ways, we get a 1 if all bits are 0
+        then we AND both
+        output: 1 if 15 bits equal 110 0000 0000 0000
+    */
+
+
+    /* RAM: a RAM16K with in[16], addr[0..14], and ramOut wire 
+        load bit: load AND(NOT(addr[15]), NOT(KBDetect))
+            → only load RAM if address is below 16384
+            → no need to check for KBDetect since that would be >16384
+    */
+
+
+    /* SCREEN: a RAM8K 'Screen' chip with in[16], addr[0..13], and screenOut wire
+        load bit: load AND addr[14] AND NOT addr[13]
+            → we could also check KBDetect, but unnecessary because >24576 is invalid?
+    */
+
+
+    /* OUT_SELECTOR: selects between outputs of RAM, Screen, or Keyboard chips
+        Mux4Way16 selector bits: addr[14]=0 means addr is no larger than 2^14-1=16383
+            addr[14] → 2^15=16384
+            addr[13] → 2^14=8192
+        Mux4Way16 inputs:
+            a. RAM → 00
+            b. RAM → 01. range from [0, 16383]
+            c. Screen → 10. range from [16384=2^14, 2^14+2^13-1=16384+8192-1=24575]
+            d. Keyboard → 11. 24576
+    */
+
+
+    /* KEYBOARD: a 16-bit Register 'Keyboard' chip with one out wire 
+        A Mux controls this with KBDetect as the selector
+            Mux16
+                a: KeyboardOut
+                b: false
+    */
 }
