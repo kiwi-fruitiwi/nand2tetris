@@ -46,7 +46,7 @@ CHIP Memory {
             maybe we should only check addr[14] AND addr[13]
                 outputs 1 if both bits are on; addr >= 24576
     */
-    And(a=address[14], b=address[13], out=KBDetect);
+    // And(a=address[14], b=address[13], out=KBDetect);
 
 
     /* RAM: a RAM16K with in[16], addr[0..14], and ramOut wire 
@@ -86,7 +86,7 @@ CHIP Memory {
             IN a[16], b[16], c[16], d[16], sel[2];
             OUT out[16];
     */
-    Mux4Way16(a=RamOut, b=RamOut, c=ScreenOut, d=KBDetectMux, sel[0]=address[13], sel[1]=address[14], out=out);
+    Mux4Way16(a=RamOut, b=RamOut, c=ScreenOut, d=KeyboardOut, sel[0]=address[13], sel[1]=address[14], out=out);
 
 
     /* KEYBOARD: a 16-bit Register 'Keyboard' chip with one out wire 
@@ -98,7 +98,9 @@ CHIP Memory {
         CHIP Mux16 
             IN a[16], b[16], sel;
             OUT out[16];
+
+        This mux is no longer necessary with simplified KBDetect!
     */
     Keyboard(out=KeyboardOut);
-    Mux16(a=false, b=KeyboardOut, sel=KBDetect, out=KBDetectMux);
+    // Mux16(a=false, b=KeyboardOut, sel=KBDetect, out=KBDetectMux);
 }
