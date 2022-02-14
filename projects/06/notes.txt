@@ -1,0 +1,38 @@
+﻿[0857]-	⊼ 📹 Unit 6.4 The Assembly Process - Handling Symbols
+symbol types ← all handled with a-instructions
+	label → locations of goto instructions (name)
+		pseudocommands don't generate any code
+		translate labels to value of next instruction
+	pre-defined → keyboard, screen, R0, R1
+	variable → memory locations for variables
+		any symbol not predefined, and
+		nonlabel not declared (name) elsewhere
+		every var assigned to unique memory address, starting at 16
+			if you see it for the 1ˢᵗ time, assign it
+			otherwise replace symbol with its value
+implementation with [symbol table] ← two pass assembly process
+	start with predefined symbols
+	1ˢᵗ pass: iterate through every line in the code → add each x matching (x)
+		keep track on lines read so far
+			skip label instructions!
+			skip whitespace!
+	2ⁿᵈ pass: extract variables on the second pass through the code
+		any symbol that doesn't appear in the symbol table must be variable!
+		if we see it on the symbol table, replace
+		else it must be new → add to table
+full assembly process: algorithm
+	construct empty symbol table. add predefined symbols
+	1ˢᵗ pass: scan entire program
+		for each instruction of form (name)
+		add tuple(name, address) to table, where address is number of instruction following (name)
+	2ⁿᵈ pass: scan entire program again
+		set n to 16
+		for each instruction:
+			if instruction is @symbol, look it up in the symbol table
+			if(symbol, value) is found, use value to complete translation
+			else:
+				add(symbol, n) to symbol table
+				use n to complete the instruction's translation
+				n++
+		if instruction is a c-instruction, complete its translation
+		write translation to output file
