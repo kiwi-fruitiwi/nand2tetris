@@ -1,0 +1,71 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/05/Memory.hdl
+
+/**
+ * The complete address space of the Hack computer's memory,
+ * including RAM and memory-mapped I/O. 
+ * The chip facilitates read and write operations, as follows:
+ *     Read:  out(t) = Memory[address(t)](t)
+ *     Write: if load(t-1) then Memory[address(t-1)](t) = in(t-1)
+ * In words: the chip always outputs the value stored at the memory 
+ * location specified by address. If load==1, the in value is loaded 
+ * into the memory location specified by address. This value becomes 
+ * available through the out output from the next time step onward.
+ * Address space rules:
+ * Only the upper 16K+8K+1 words of the Memory chip are used. 
+ * Access to address>0x6000 is invalid. Access to any address in 
+ * the range 0x4000-0x5FFF results in accessing the screen memory 
+ * map. Access to address 0x6000 results in accessing the keyboard 
+ * memory map. The behavior in these addresses is described in the 
+ * Screen and Keyboard chip specifications given in the book.
+ */
+
+CHIP Memory {
+    IN in[16], load, address[15];
+    OUT out[16];
+
+    PARTS:
+    // Put your code here:
+    // RAM16K load
+    Not(in=address[14], out=RAM16KCondition);
+    And(a=RAM16KCondition, b=load, out=RAM16KLoad);
+
+    // RAM16K
+    RAM16K(in=in, load=RAM16KLoad, address=address[0..13], out=RAM16KOut);
+
+    // Screen load
+    Not(in=address[13], out=notAddressAt13);
+    And(a=notAddressAt13, b=address[14], out=ScreenCondition);
+    And(a=ScreenCondition, b=load, out=ScreenLoad);
+
+    // Screen
+    Screen(in=in, load=ScreenLoad, address=address[0..12], out=ScreenOut);
+
+    // Keyboard load
+
+    // this is a deprecated method because it turns out that it doesn't have to be exactly 24576. As long as the code is correct, it should output 24576 for the keyboard.
+    // Or8Way(in[0]=notAddressAt13, in[1]=RAM16KCondition, in[2..7] = address[7..12], // out=KeyboardPart1);
+    // Or8Way(in[0..6]=address[0..6], in[7]=false, out=KeyboardPart2);
+    // Or(a=KeyboardPart1, b=KeyboardPart2, out=KeyboardPart4);
+    // Not(in=KeyboardPart4, out=KeyboardCondition);
+    // And(a=KeyboardCondition, b=load, out=KeyboardLoad);
+
+    // the keyboard load should be on if the load is on and address[14 & 13] is on.
+    And(a=address[14], b=address[13], out=KeyboardCondition);
+    And(a=KeyboardCondition, b=load, out=KeyboardLoad);
+
+    // Keyboard
+    Keyboard(out=KeyboardOut);
+
+    // Mux selector
+    Or(a=RAM16KCondition, b=ScreenCondition, out=MuxSelPart1);
+    Or(a=MuxSelPart1, b=KeyboardCondition, out=MuxSelPart2);
+    Not(in=MuxSelPart2, out=MuxSelPart3);
+    Or(a=MuxSelPart3, b=ScreenCondition, out=MuxSelPart4);
+    And(a=address[14], b=address[13], out=MuxSelPart5);
+
+    // Mux4Way16
+    Mux4Way16(a=RAM16KOut, b=ScreenOut, c=KeyboardOut, d=false, sel[0]=MuxSelPart4, sel[1]=MuxSelPart5, out=out);
+}

@@ -68,7 +68,8 @@ CHIP Memory {
         addr[13] is 2^13=8192. Screen memory is accessed only when addr[14]=1 (address ≥ 16384) and addr[13]=0 (16384+0*8192)
     */
     Not(in=address[13], out=notAddr13);
-    And(a=address[14], b=notAddr13, out=ScreenLoad);
+    And(a=address[14], b=notAddr13, out=between16384and24575);
+    And(a=between16384and24575, b=load, out=ScreenLoad);
     Screen(in=in, load=ScreenLoad, address=address[0..12], out=ScreenOut);
 
 

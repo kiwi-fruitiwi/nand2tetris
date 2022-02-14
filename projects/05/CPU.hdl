@@ -60,7 +60,7 @@ CHIP CPU {
 
     // either any a-instruction or a c-instruction with dest including RegA loads me
     Or(a=notOpcode, b=cinstructionDestDReg, out=ARegLoad);
-    Register(in=ARegIn, load=ARegLoad, out=ARegOut, out[0..14]=addressM);
+    ARegister(in=ARegIn, load=ARegLoad, out=ARegOut, out[0..14]=addressM);
     // TODO addressM is 15 bits, but out is 15
 
 
