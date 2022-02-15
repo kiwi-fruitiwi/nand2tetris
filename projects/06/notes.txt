@@ -1,38 +1,95 @@
-﻿[0857]-	⊼ 📹 Unit 6.4 The Assembly Process - Handling Symbols
-symbol types ← all handled with a-instructions
-	label → locations of goto instructions (name)
-		pseudocommands don't generate any code
-		translate labels to value of next instruction
-	pre-defined → keyboard, screen, R0, R1
-	variable → memory locations for variables
-		any symbol not predefined, and
-		nonlabel not declared (name) elsewhere
-		every var assigned to unique memory address, starting at 16
-			if you see it for the 1ˢᵗ time, assign it
-			otherwise replace symbol with its value
-implementation with [symbol table] ← two pass assembly process
-	start with predefined symbols
-	1ˢᵗ pass: iterate through every line in the code → add each x matching (x)
-		keep track on lines read so far
-			skip label instructions!
-			skip whitespace!
-	2ⁿᵈ pass: extract variables on the second pass through the code
-		any symbol that doesn't appear in the symbol table must be variable!
-		if we see it on the symbol table, replace
-		else it must be new → add to table
-full assembly process: algorithm
-	construct empty symbol table. add predefined symbols
-	1ˢᵗ pass: scan entire program
-		for each instruction of form (name)
-		add tuple(name, address) to table, where address is number of instruction following (name)
-	2ⁿᵈ pass: scan entire program again
-		set n to 16
-		for each instruction:
-			if instruction is @symbol, look it up in the symbol table
-			if(symbol, value) is found, use value to complete translation
-			else:
-				add(symbol, n) to symbol table
-				use n to complete the instruction's translation
+﻿modules needed
+	decimal to binary converter
+
+doing this in p5.js: what can we animate?
+display input and show each step to output
+	display c-instruction dictionary
+	show translation process 
+		highlight current operation with delays
+		highlight lookup table for c-instructions
+		
+
+
+
+01:31 am Tuesday, February 15, 2022
+[0131]-	slightly more in-depth pseudocode
+	create symbol table dictionary
+	use dec → binary converter
+	1st pass: read every line; lineCount=1
+		if whitespace, skip
+		else
+			look for open paren, '('
+				if found, extract what's inside
+				add (name, address) to symbolTable. address is lineCount+1 
+			lineCount++
+	2nd pass: read every line; lineCount=1 again
+		n=16
+		for each instruction
+			if a-instruction (check if begins with @)
+			if instruction is @symbol, look up key,value pair in sTable
+			if value, use line number returned → a-instruction
+			else
+				add (symbol, n) to sTable
+				use n to complete translation
 				n++
-		if instruction is a c-instruction, complete its translation
-		write translation to output file
+			if c-instruction, complete translation: use c-ins dictionary
+				simply match text strings; all expressions are covered
+					dest=comp;jump
+					jump can be null → 000
+					dest can be null → 000
+					
+				see Fill.asm for examples: D;JGE
+					111 ← all c-instructions begin with 111
+					0 001100 ← 'D' in c-ins table, 000 ← null dest, 011
+				ex: D=D+A
+					111
+					0 000010 ← D+A, with 'a' bit 0; 'a'=1 → D+M
+					010 ← dest is D
+					000 ← jmp is null
+				ex: M=M-1
+					111 ← again, all c-instructions begin with this
+					1 110010 ← M-1. if the 'a' bit were 0, we'd have A-1
+					001 ← dest is M
+					000 ← jmp is null
+			output translation to file
+
+
+12:59 am Monday, February 14, 2022
+[0857]-	⊼ 📹 Unit 6.4 The Assembly Process - Handling Symbols
+	symbol types ← all handled with a-instructions
+		label → locations of goto instructions (name)
+			pseudocommands don't generate any code
+			translate labels to value of next instruction
+		pre-defined → keyboard, screen, R0, R1
+		variable → memory locations for variables
+			any symbol not predefined, and
+			nonlabel not declared (name) elsewhere
+			every var assigned to unique memory address, starting at 16
+				if you see it for the 1ˢᵗ time, assign it
+				otherwise replace symbol with its value
+	implementation with [symbol table] ← two pass assembly process
+		start with predefined symbols
+		1ˢᵗ pass: iterate through every line in the code → add each x matching (x)
+			keep track on lines read so far
+				skip label instructions!
+				skip whitespace!
+		2ⁿᵈ pass: extract variables on the second pass through the code
+			any symbol that doesn't appear in the symbol table must be variable!
+			if we see it on the symbol table, replace
+			else it must be new → add to table
+	full assembly process: algorithm
+		construct empty symbol table. add predefined symbols
+		1ˢᵗ pass: scan entire program
+			for each instruction of form (name)
+			add tuple(name, address) to table, where address is number of instruction following (name)
+		2ⁿᵈ pass: scan entire program again
+			set n to 16
+			for each instruction:
+				if instruction is @symbol, look it up in the symbol table
+				if(symbol, value) is found, use value to complete translation
+				else:
+					add(symbol, n) to symbol table
+					use n to complete the instruction's translation
+					n++
+			if instruction is a c-instruction, complete its translation
+			write translation to output file
